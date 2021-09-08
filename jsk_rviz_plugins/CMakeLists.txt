@@ -20,7 +20,9 @@ find_package(catkin REQUIRED COMPONENTS rviz jsk_hark_msgs jsk_footstep_msgs jsk
   geometry_msgs
   dynamic_reconfigure
   jsk_recognition_msgs
-  jsk_gui_msgs)
+  jsk_gui_msgs
+  dsg_ros
+  message_filters)
 
 # Use ccache if installed to make it fast to generate object files
 if (CMAKE_VERSION VERSION_LESS 3.4)
@@ -89,6 +91,7 @@ set(HEADER_FILES
   src/overlay_image_display.h
   src/overlay_camera_display.h
   src/plotter_2d_display.h
+  src/parametric_plotter_2d_display.h
   src/pie_chart_display.h
   src/diagnostics_display.h
   src/quiet_interactive_marker_display.h
@@ -143,6 +146,7 @@ set(SOURCE_FILES
   src/overlay_menu_display.cpp
   src/overlay_image_display.cpp
   src/overlay_camera_display.cpp
+  src/parametric_plotter_2d_display.cpp
   src/plotter_2d_display.cpp
   src/pie_chart_display.cpp
   src/diagnostics_display.cpp
@@ -200,7 +204,8 @@ add_dependencies(jsk_rviz_plugins
   jsk_recognition_msgs_generate_messages_cpp
   people_msgs_generate_messages_cpp
   view_controller_msgs_generate_messages_cpp
-  ${PROJECT_NAME}_generate_messages_cpp)
+  ${PROJECT_NAME}_generate_messages_cpp
+  ${catkin_EXPORTED_TARGETS})
 
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
   set_target_properties(jsk_rviz_plugins PROPERTIES LINK_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -z defs")
