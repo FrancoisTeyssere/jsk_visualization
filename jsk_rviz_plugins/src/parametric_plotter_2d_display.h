@@ -37,6 +37,7 @@
 
 #include "std_msgs/Float32.h"
 #include "std_msgs/String.h"
+#include "std_msgs/Bool.h"
 #ifndef Q_MOC_RUN
 #include <rviz/display.h>
 #include "overlay_utils.h"
@@ -143,13 +144,16 @@ namespace jsk_rviz_plugins
     int caption_offset_;
     double min_value_;
     double max_value_;
+    bool m_is_active;
     
     ////////////////////////////////////////////////////////
     // ROS variables
     ////////////////////////////////////////////////////////
     boost::mutex mutex_;
     ros::Subscriber sub_;
+    ros::Subscriber m_start_sub;
     void m_sync_cb(const sensor_msgs::RangeConstPtr &depth_msg, const dsg_ros::dsg_msgConstPtr &dsg_msg);
+    void m_start_cb(const std_msgs::Bool::ConstPtr& msg);
 
     ros::Publisher m_log_pub;
     std_msgs::String m_log_msg;

@@ -42,7 +42,8 @@
 namespace jsk_rviz_plugins
 {
   ParametricPlotter2DDisplay::ParametricPlotter2DDisplay()
-    : rviz::Display(), min_value_(0.0), max_value_(0.0), m_buffer_indice(1), m_max_x(1.0)
+    : rviz::Display(), min_value_(0.0), max_value_(0.0), m_buffer_indice(1), 
+    m_max_x(1.0), m_is_active(false)
     {
     update_topic_property_ = new rviz::RosTopicProperty(
       "Topic", "",
@@ -143,6 +144,9 @@ namespace jsk_rviz_plugins
         "only used if auto color change is set to True.",
         this, SLOT(updateMaxColor()));
 
+    ros::NodeHandle n;
+    m_start_sub = n.subscribe<std_msgs::Bool>("start_detection", 1, &ParametricPlotter2DDisplay::m_start_cb, this);
+
   }
 
   ParametricPlotter2DDisplay::~ParametricPlotter2DDisplay()
@@ -169,6 +173,21 @@ namespace jsk_rviz_plugins
     // delete max_value_property_;
     // delete auto_color_change_property_;
   }
+
+  void ParametricPlotter2DDisplay::m_start_cb(const std_msgs::Bool::ConstPtr& msg)
+  {
+
+    if(msg->data)
+    {
+      m_is_active = true;
+      initializeBuffer();
+    }
+    else
+    {
+      m_is_active = false;
+    }
+  }
+  
 
   void ParametricPlotter2DDisplay::initializeBuffer()
   {
@@ -320,7 +339,7 @@ namespace jsk_rviz_plugins
   {
     boost::mutex::scoped_lock lock(mutex_);
 
-    if (!isEnabled()) {
+    if (!isEnabled() || !m_is_active) {
       return;
     }
 
@@ -449,6 +468,7 @@ namespace jsk_rviz_plugins
 
     m_depth_sub.subscribe(n, "depth_stamped", 1);
     m_dsg_sub.subscribe(n, "dsg_value_stamped", 1);
+
     m_sync.reset(new m_Sync_type(m_sync_policy(10), m_depth_sub, m_dsg_sub));
     m_sync->registerCallback(boost::bind(&ParametricPlotter2DDisplay::m_sync_cb, this, _1, _2));
 
