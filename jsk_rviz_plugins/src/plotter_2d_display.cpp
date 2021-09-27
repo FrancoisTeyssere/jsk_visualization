@@ -253,8 +253,8 @@ namespace jsk_rviz_plugins
       uint16_t w = overlay_->getTextureWidth();
       uint16_t h = overlay_->getTextureHeight() - caption_offset_;
 
-      double margined_max_value = max_value_ + (max_value_ - min_value_) / 2;
-      double margined_min_value = min_value_ - (max_value_ - min_value_) / 2;
+      double margined_max_value = max_value_ + (max_value_ - min_value_) / 6;
+      double margined_min_value = min_value_ - (max_value_ - min_value_) / 6;
       
       for (size_t i = 1; i < buffer_length_; i++) {
         double v_prev = (margined_max_value - buffer_[i - 1]) / (margined_max_value - margined_min_value);
