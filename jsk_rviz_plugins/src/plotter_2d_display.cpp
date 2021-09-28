@@ -208,7 +208,7 @@ namespace jsk_rviz_plugins
     updateAutoScale();
     updateMinValue();
     updateMaxValue();
-    overlay_->updateTextureSize(width_property_->getInt(),
+    overlay_->updateTextureSize(width_property_->getInt() + scale_offset_,
                                 height_property_->getInt() + caption_offset_);
   }
 
@@ -250,7 +250,7 @@ namespace jsk_rviz_plugins
       painter.setRenderHint(QPainter::Antialiasing, true);
       painter.setPen(QPen(fg_color, line_width_, Qt::SolidLine));
       
-      uint16_t w = overlay_->getTextureWidth();
+      uint16_t w = overlay_->getTextureWidth() - scale_offset_;
       uint16_t h = overlay_->getTextureHeight() - caption_offset_;
 
       double margined_max_value = max_value_ + (max_value_ - min_value_) / 2;
@@ -268,18 +268,18 @@ namespace jsk_rviz_plugins
         v = std::max(std::min(v, 1.0), 0.0);
         u = std::max(std::min(u, 1.0), 0.0);
         
-        uint16_t x_prev = (int)(u_prev * w);
-        uint16_t x = (int)(u * w);
+        uint16_t x_prev = (int)(u_prev * w) + scale_offset_;
+        uint16_t x = (int)(u * w) + scale_offset_;
         uint16_t y_prev = (int)(v_prev * h);
         uint16_t y = (int)(v * h);
         painter.drawLine(x_prev, y_prev, x, y);
       }
       // draw border
       if (show_border_) {
-        painter.drawLine(0, 0, 0, h);
-        painter.drawLine(0, h, w, h);
-        painter.drawLine(w, h, w, 0);
-        painter.drawLine(w, 0, 0, 0);
+        painter.drawLine(scale_offset_, 0, scale_offset_, h);
+        painter.drawLine(scale_offset_, h, w+scale_offset_, h);
+        painter.drawLine(w+scale_offset_, h, w+scale_offset_, 0);
+        painter.drawLine(w+scale_offset_, 0, scale_offset_, 0);
       }
       // draw caption
       if (show_caption_) {
@@ -492,6 +492,7 @@ namespace jsk_rviz_plugins
     QFont font;
     font.setPointSize(text_size_);
     caption_offset_ = QFontMetrics(font).height();
+    scale_offset_ = QFontMetrics(font).height();
   }
   
   void Plotter2DDisplay::updateShowCaption()

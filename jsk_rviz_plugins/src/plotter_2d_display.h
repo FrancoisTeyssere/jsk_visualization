@@ -128,6 +128,7 @@ namespace jsk_rviz_plugins
     int line_width_;
     int text_size_;
     int caption_offset_;
+    int scale_offset_;
     double min_value_;
     double max_value_;
     
