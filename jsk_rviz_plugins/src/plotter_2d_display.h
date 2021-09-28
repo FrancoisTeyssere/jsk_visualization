@@ -115,6 +115,7 @@ namespace jsk_rviz_plugins
     bool auto_color_change_;
     bool show_value_;
     bool show_caption_;
+    bool show_scale_;
     bool draw_required_;
     float last_time_;
     float update_interval_;

@@ -42,7 +42,7 @@
 namespace jsk_rviz_plugins
 {
   Plotter2DDisplay::Plotter2DDisplay()
-    : rviz::Display(), min_value_(0.0), max_value_(0.0)
+    : rviz::Display(), min_value_(0.0), max_value_(0.0), scale_offset_(0), show_scale_(true)
   {
     update_topic_property_ = new rviz::RosTopicProperty(
       "Topic", "",
@@ -281,6 +281,51 @@ namespace jsk_rviz_plugins
         painter.drawLine(w+scale_offset_, h, w+scale_offset_, 0);
         painter.drawLine(w+scale_offset_, 0, scale_offset_, 0);
       }
+
+      if(show_scale_)
+      {
+        //Compute lines coordinates
+        double zero_value = (margined_max_value - min_value_) / (margined_max_value - margined_min_value);
+        double max_value =  (margined_max_value - max_value_) / (margined_max_value - margined_min_value);
+        double mid_value = (margined_max_value - (min_value_ + (max_value_-min_value_)/2)) / (margined_max_value - margined_min_value);
+        zero_value = std::max(std::min(zero_value, 1.0), 0.0);
+        max_value = std::max(std::min(max_value, 1.0), 0.0);
+        mid_value = std::max(std::min(mid_value, 1.0), 0.0);
+        uint16_t zero_y = (int)(zero_value*h);
+        uint16_t max_y = (int)(max_value*h);
+        uint16_t mid_y = (int)(mid_value*h);
+
+        //draw text
+        std::stringstream ss_min, ss_max, ss_mid;
+        ss_min<<std::fixed<<std::setprecision(0)<<min_value_;
+        ss_max<<std::fixed<<std::setprecision(0)<<max_value_;
+        ss_mid<<std::fixed<<std::setprecision(0)<<((max_value_ - min_value_)/2) + min_value_;
+
+        QFont font = painter.font();
+        font.setPointSize(text_size_);
+        font.setBold(true);
+        painter.setFont(font);
+        painter.drawText(0, zero_y-caption_offset_/2, w, h-zero_y+caption_offset_/2,
+                         Qt::AlignLeft | Qt::AlignTop,
+                         ss_min.str().c_str());
+        painter.drawText(0, max_y-caption_offset_/2, w, h-max_y+caption_offset_/2,
+                                Qt::AlignLeft | Qt::AlignTop,
+                                ss_max.str().c_str());
+        painter.drawText(0, mid_y-caption_offset_/2, w, h-mid_y+caption_offset_/2,
+                                Qt::AlignLeft | Qt::AlignTop,
+                                ss_mid.str().c_str());
+
+        //set line width to 1
+        painter.setPen(QPen(fg_color, 1, Qt::SolidLine));
+        //draw lines
+        painter.drawLine(scale_offset_, zero_y, w+scale_offset_, zero_y);
+        painter.drawLine(scale_offset_, max_y, w+scale_offset_, max_y);
+        painter.drawLine(scale_offset_, mid_y, w+scale_offset_, mid_y);
+
+        //setpen back to normal
+        painter.setPen(QPen(fg_color, line_width_, Qt::SolidLine));
+
+      }
       // draw caption
       if (show_caption_) {
         QFont font = painter.font();
@@ -492,7 +537,6 @@ namespace jsk_rviz_plugins
     QFont font;
     font.setPointSize(text_size_);
     caption_offset_ = QFontMetrics(font).height();
-    scale_offset_ = QFontMetrics(font).height();
   }
   
   void Plotter2DDisplay::updateShowCaption()
@@ -511,6 +555,15 @@ namespace jsk_rviz_plugins
     if (!auto_scale_) {
       min_value_ = min_value_property_->getFloat();
     }
+    //Compute scale offset
+    QFont font;
+    font.setPointSize(text_size_);
+    std::stringstream ss;
+    //max absolute value will supposedly be the largest text
+    ss << std::setprecision(1)<<std::max(fabs(min_value_), fabs(max_value_));
+    QString str(QString::fromStdString(ss.str()));
+    QFontMetrics fm(font);
+    scale_offset_ = fm.horizontalAdvance(str);
   }
 
   void Plotter2DDisplay::updateMaxValue()
@@ -518,6 +571,16 @@ namespace jsk_rviz_plugins
     if (!auto_scale_) {
       max_value_ = max_value_property_->getFloat();
     }
+    //Compute scale offset
+    QFont font;
+    font.setPointSize(text_size_);
+    std::stringstream ss;
+    //max absolute value will supposedly be the largest text
+    ss << std::setprecision(1)<<std::max(fabs(min_value_), fabs(max_value_));
+
+    QString str(QString::fromStdString(ss.str()));
+    QFontMetrics fm(font);
+    scale_offset_ = fm.horizontalAdvance(str);
   }
 
   void Plotter2DDisplay::updateAutoScale()
