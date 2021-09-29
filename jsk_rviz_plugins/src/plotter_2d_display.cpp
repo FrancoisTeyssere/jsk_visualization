@@ -581,7 +581,7 @@ namespace jsk_rviz_plugins
     ss << std::setprecision(ordinate_precision_)<<std::max(fabs(min_value_), fabs(max_value_));
     QString str(QString::fromStdString(ss.str()));
     QFontMetrics fm(font);
-    ordinate_offset_ = fm.horizontalAdvance(str);
+    ordinate_offset_ = fm.width(str);
   }
 
   void Plotter2DDisplay::updateMaxValue()
@@ -598,7 +598,7 @@ namespace jsk_rviz_plugins
 
     QString str(QString::fromStdString(ss.str()));
     QFontMetrics fm(font);
-    ordinate_offset_ = fm.horizontalAdvance(str);
+    ordinate_offset_ = fm.width(str);
   }
 
   void Plotter2DDisplay::updateAutoScale()
