@@ -102,6 +102,7 @@ namespace jsk_rviz_plugins
     rviz::BoolProperty* auto_scale_property_;
     rviz::FloatProperty* max_value_property_;
     rviz::FloatProperty* min_value_property_;
+    rviz::BoolProperty* show_ordinate_property_;
     
     OverlayObject::Ptr overlay_;
     QColor fg_color_;
@@ -115,7 +116,7 @@ namespace jsk_rviz_plugins
     bool auto_color_change_;
     bool show_value_;
     bool show_caption_;
-    bool show_scale_;
+    bool show_ordinate_;
     bool draw_required_;
     float last_time_;
     float update_interval_;
@@ -129,7 +130,8 @@ namespace jsk_rviz_plugins
     int line_width_;
     int text_size_;
     int caption_offset_;
-    int scale_offset_;
+    int ordinate_offset_;
+    const int ordinate_precision_;
     double min_value_;
     double max_value_;
     
@@ -161,6 +163,7 @@ namespace jsk_rviz_plugins
     void updateAutoScale();
     void updateMinValue();
     void updateMaxValue();
+    void updateShowOrdinate();
   private:
   };
 }
