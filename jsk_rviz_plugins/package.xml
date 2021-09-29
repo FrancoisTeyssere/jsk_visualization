@@ -34,6 +34,8 @@
   <build_depend>std_msgs</build_depend>
   <build_depend>urdfdom_py</build_depend>
   <build_depend>view_controller_msgs</build_depend>
+  <build_depend>message_filters</build_depend>
+  <build_depend>dsg_ros</build_depend>
 
   <exec_depend condition="$ROS_PYTHON_VERSION == 2">python-scipy</exec_depend>
   <exec_depend condition="$ROS_PYTHON_VERSION == 3">python3-scipy</exec_depend>
@@ -56,6 +58,7 @@
   <exec_depend>std_msgs</exec_depend>
   <exec_depend>urdfdom_py</exec_depend>
   <exec_depend>view_controller_msgs</exec_depend>
+  <exec_depend>message_filters</exec_depend>
 
   <test_depend>rostest</test_depend>
   <test_depend>pr2_description</test_depend> <!-- link_marker_publisher_sample.launch, contact_state_marker_sample.launch requires pr2_description -->
