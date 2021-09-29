@@ -21,6 +21,7 @@ find_package(catkin REQUIRED COMPONENTS rviz jsk_hark_msgs jsk_footstep_msgs jsk
   dynamic_reconfigure
   jsk_recognition_msgs
   jsk_gui_msgs
+  dsg_ros
   message_filters)
 
 # Use ccache if installed to make it fast to generate object files
