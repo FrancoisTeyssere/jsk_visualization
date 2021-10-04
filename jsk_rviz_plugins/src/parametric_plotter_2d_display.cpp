@@ -43,7 +43,8 @@ namespace jsk_rviz_plugins
 {
   ParametricPlotter2DDisplay::ParametricPlotter2DDisplay()
     : rviz::Display(), min_value_(0.0), max_value_(0.0), m_buffer_indice(1), 
-    m_max_x(1.0), m_is_active(false)
+    m_max_x(1.0), m_is_active(false), ordinate_offset_(0), show_ordinate_(true), 
+    ordinate_precision_(1)
     {
     update_topic_property_ = new rviz::RosTopicProperty(
       "Topic", "",
@@ -126,6 +127,10 @@ namespace jsk_rviz_plugins
       "show caption", false,
       "show caption or not",
       this, SLOT(updateShowCaption()));
+    show_ordinate_property_ = new rviz::BoolProperty(
+      "show ordinate", true, 
+      "show ordinate scale or not",
+      this, SLOT(updateShowOrdinate()));
     update_interval_property_ = new rviz::FloatProperty(
       "update interval", 0.04,
       "update interval of the plotter",
@@ -230,7 +235,7 @@ namespace jsk_rviz_plugins
     updateAutoScale();
     updateMinValue();
     updateMaxValue();
-    overlay_->updateTextureSize(width_property_->getInt(),
+    overlay_->updateTextureSize(width_property_->getInt() + ordinate_offset_,
                                 height_property_->getInt() + caption_offset_);
   }
 
@@ -272,7 +277,7 @@ namespace jsk_rviz_plugins
       painter.setRenderHint(QPainter::Antialiasing, true);
       painter.setPen(QPen(fg_color, line_width_, Qt::SolidLine));
       
-      uint16_t w = overlay_->getTextureWidth();
+      uint16_t w = overlay_->getTextureWidth() - ordinate_offset_;
       uint16_t h = overlay_->getTextureHeight() - caption_offset_;
 
       double margined_max_value = max_value_ + (max_value_ - min_value_) / 2;
@@ -292,8 +297,8 @@ namespace jsk_rviz_plugins
         v = std::max(std::min(v, 1.0), 0.0);
         u = std::max(std::min(u, 1.0), 0.0);
         
-        uint16_t x_prev = (int)(u_prev * w);
-        uint16_t x = (int)(u * w);
+        uint16_t x_prev = (int)(u_prev * w) + ordinate_offset_;
+        uint16_t x = (int)(u * w) + ordinate_offset_;
         uint16_t y_prev = (int)(v_prev * h);
         uint16_t y = (int)(v * h);
         painter.drawLine(x_prev, y_prev, x, y);
@@ -304,10 +309,55 @@ namespace jsk_rviz_plugins
       }
       // draw border
       if (show_border_) {
-        painter.drawLine(0, 0, 0, h);
-        painter.drawLine(0, h, w, h);
-        painter.drawLine(w, h, w, 0);
-        painter.drawLine(w, 0, 0, 0);
+        painter.drawLine(ordinate_offset_, 0, ordinate_offset_, h);
+        painter.drawLine(ordinate_offset_, h, w+ordinate_offset_, h);
+        painter.drawLine(w+ordinate_offset_, h, w+ordinate_offset_, 0);
+        painter.drawLine(w+ordinate_offset_, 0, ordinate_offset_, 0);
+      }
+      if(show_ordinate_)
+      {
+        //Compute lines coordinates
+        double zero_value = (margined_max_value - min_value_) / (margined_max_value - margined_min_value);
+        double max_value =  (margined_max_value - max_value_) / (margined_max_value - margined_min_value);
+        double mid_value = (margined_max_value - (min_value_ + (max_value_-min_value_)/2)) / (margined_max_value - margined_min_value);
+        // chop within 0 ~ 1
+        zero_value = std::max(std::min(zero_value, 1.0), 0.0);
+        max_value = std::max(std::min(max_value, 1.0), 0.0);
+        mid_value = std::max(std::min(mid_value, 1.0), 0.0);
+        uint16_t zero_y = (int)(zero_value*h);
+        uint16_t max_y = (int)(max_value*h);
+        uint16_t mid_y = (int)(mid_value*h);
+
+        //draw text
+        std::stringstream ss_min, ss_max, ss_mid;
+        ss_min<<std::fixed<<std::setprecision(ordinate_precision_)<<min_value_;
+        ss_max<<std::fixed<<std::setprecision(ordinate_precision_)<<max_value_;
+        ss_mid<<std::fixed<<std::setprecision(ordinate_precision_)<<((max_value_ - min_value_)/2) + min_value_;
+
+        QFont font = painter.font();
+        font.setPointSize(text_size_*0.7);//reduce scale size
+        font.setBold(true);
+        painter.setFont(font);
+        painter.drawText(0, zero_y-caption_offset_/2, ordinate_offset_-5, h-zero_y+caption_offset_/2,
+                         Qt::AlignRight| Qt::AlignTop,
+                         ss_min.str().c_str());
+        painter.drawText(0, max_y-caption_offset_/2, ordinate_offset_-5, h-max_y+caption_offset_/2,
+                                Qt::AlignRight | Qt::AlignTop,
+                                ss_max.str().c_str());
+        painter.drawText(0, mid_y-caption_offset_/2, ordinate_offset_-5, h-mid_y+caption_offset_/2,
+                                Qt::AlignRight | Qt::AlignTop,
+                                ss_mid.str().c_str());
+
+        //set line width to 1
+        painter.setPen(QPen(fg_color, 1, Qt::SolidLine));
+        //draw lines
+        painter.drawLine(ordinate_offset_, zero_y, w+ordinate_offset_, zero_y);
+        painter.drawLine(ordinate_offset_, max_y, w+ordinate_offset_, max_y);
+        painter.drawLine(ordinate_offset_, mid_y, w+ordinate_offset_, mid_y);
+
+        //setpen back to normal
+        painter.setPen(QPen(fg_color, line_width_, Qt::SolidLine));
+
       }
       // draw caption
       if (show_caption_) {
@@ -315,7 +365,7 @@ namespace jsk_rviz_plugins
         font.setPointSize(text_size_);
         font.setBold(true);
         painter.setFont(font);
-        painter.drawText(0, h, w, caption_offset_,
+        painter.drawText(ordinate_offset_, h, w, caption_offset_,
                          Qt::AlignCenter | Qt::AlignVCenter,
                          getName());
       }
@@ -326,7 +376,7 @@ namespace jsk_rviz_plugins
         painter.setFont(font);
         std::ostringstream ss;
         ss << std::fixed << std::setprecision(2) << buffer_[buffer_.size() - 1].dsg;
-        painter.drawText(0, 0, w, h,
+        painter.drawText(ordinate_offset_, 0, w, h,
                          Qt::AlignCenter | Qt::AlignVCenter,
                          ss.str().c_str());
       }
@@ -597,6 +647,13 @@ namespace jsk_rviz_plugins
     QFont font;
     font.setPointSize(text_size_);
     caption_offset_ = QFontMetrics(font).height();
+    //Compute scale offset
+    std::stringstream ss;
+    //max absolute value will supposedly be the largest text
+    ss << std::setprecision(ordinate_precision_)<<std::max(fabs(min_value_), fabs(max_value_));
+    QString str(QString::fromStdString(ss.str()));
+    QFontMetrics fm(font);
+    ordinate_offset_ = fm.width(str);
   }
   
   void ParametricPlotter2DDisplay::updateShowCaption()
@@ -609,12 +666,32 @@ namespace jsk_rviz_plugins
       text_size_property_->hide();
     }
   }
+    void ParametricPlotter2DDisplay::updateShowOrdinate()
+  {
+    show_ordinate_  = show_ordinate_property_->getBool();
+    if (show_caption_) {
+      updateMinValue();
+      updateMaxValue();
+    }
+    else {
+      ordinate_offset_ = 0;
+    }
+  }
 
   void ParametricPlotter2DDisplay::updateMinValue()
   {
     if (!auto_scale_) {
-      min_value_ = min_value_property_->getFloat();
+      min_value_ = min_value_property_->getFloat();  
     }
+    //Compute scale offset
+    QFont font;
+    font.setPointSize(text_size_);
+    std::stringstream ss;
+    //max absolute value will supposedly be the largest text
+    ss << std::setprecision(ordinate_precision_)<<std::max(fabs(min_value_), fabs(max_value_));
+    QString str(QString::fromStdString(ss.str()));
+    QFontMetrics fm(font);
+    ordinate_offset_ = fm.width(str);
   }
 
   void ParametricPlotter2DDisplay::updateMaxValue()
@@ -622,6 +699,16 @@ namespace jsk_rviz_plugins
     if (!auto_scale_) {
       max_value_ = max_value_property_->getFloat();
     }
+    //Compute scale offset
+    QFont font;
+    font.setPointSize(text_size_);
+    std::stringstream ss;
+    //max absolute value will supposedly be the largest text
+    ss << std::setprecision(ordinate_precision_)<<std::max(fabs(min_value_), fabs(max_value_));
+
+    QString str(QString::fromStdString(ss.str()));
+    QFontMetrics fm(font);
+    ordinate_offset_ = fm.width(str);
   }
 
   void ParametricPlotter2DDisplay::updateAutoScale()
