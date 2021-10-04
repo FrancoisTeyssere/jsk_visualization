@@ -257,7 +257,7 @@ namespace jsk_rviz_plugins
       painter.setFont(font);
       painter.setPen(QPen(fg_color, value_line_width, Qt::SolidLine));
       std::ostringstream s;
-      s << std::fixed << std::setprecision(2) << val;
+      s << std::fixed << std::setprecision(1) << val;
       painter.drawText(0, 0, width, height - caption_offset_,
                        Qt::AlignCenter | Qt::AlignVCenter,
                        s.str().c_str());
