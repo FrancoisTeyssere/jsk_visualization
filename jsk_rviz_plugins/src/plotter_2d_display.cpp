@@ -258,8 +258,8 @@ namespace jsk_rviz_plugins
       uint16_t w = overlay_->getTextureWidth() - ordinate_offset_;
       uint16_t h = overlay_->getTextureHeight() - caption_offset_;
 
-      double margined_max_value = max_value_ + (max_value_ - min_value_) / 2;
-      double margined_min_value = min_value_ - (max_value_ - min_value_) / 2;
+      double margined_max_value = max_value_ + (max_value_ - min_value_) / 6;
+      double margined_min_value = min_value_ - (max_value_ - min_value_) / 6;
       
       for (size_t i = 1; i < buffer_length_; i++) {
         double v_prev = (margined_max_value - buffer_[i - 1]) / (margined_max_value - margined_min_value);
@@ -308,17 +308,17 @@ namespace jsk_rviz_plugins
         ss_mid<<std::fixed<<std::setprecision(ordinate_precision_)<<((max_value_ - min_value_)/2) + min_value_;
 
         QFont font = painter.font();
-        font.setPointSize(text_size_);
+        font.setPointSize(text_size_*0.7);//reduce scale size
         font.setBold(true);
         painter.setFont(font);
-        painter.drawText(0, zero_y-caption_offset_/2, w, h-zero_y+caption_offset_/2,
-                         Qt::AlignLeft | Qt::AlignTop,
+        painter.drawText(0, zero_y-caption_offset_/2, ordinate_offset_-5, h-zero_y+caption_offset_/2,
+                         Qt::AlignRight| Qt::AlignTop,
                          ss_min.str().c_str());
-        painter.drawText(0, max_y-caption_offset_/2, w, h-max_y+caption_offset_/2,
-                                Qt::AlignLeft | Qt::AlignTop,
+        painter.drawText(0, max_y-caption_offset_/2, ordinate_offset_-5, h-max_y+caption_offset_/2,
+                                Qt::AlignRight | Qt::AlignTop,
                                 ss_max.str().c_str());
-        painter.drawText(0, mid_y-caption_offset_/2, w, h-mid_y+caption_offset_/2,
-                                Qt::AlignLeft | Qt::AlignTop,
+        painter.drawText(0, mid_y-caption_offset_/2, ordinate_offset_-5, h-mid_y+caption_offset_/2,
+                                Qt::AlignRight | Qt::AlignTop,
                                 ss_mid.str().c_str());
 
         //set line width to 1
@@ -543,6 +543,13 @@ namespace jsk_rviz_plugins
     QFont font;
     font.setPointSize(text_size_);
     caption_offset_ = QFontMetrics(font).height();
+    //Compute scale offset
+    std::stringstream ss;
+    //max absolute value will supposedly be the largest text
+    ss << std::setprecision(ordinate_precision_)<<std::max(fabs(min_value_), fabs(max_value_));
+    QString str(QString::fromStdString(ss.str()));
+    QFontMetrics fm(font);
+    ordinate_offset_ = fm.width(str);
   }
   
   void Plotter2DDisplay::updateShowCaption()
