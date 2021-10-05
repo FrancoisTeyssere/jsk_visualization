@@ -44,7 +44,7 @@ namespace jsk_rviz_plugins
   ParametricPlotter2DDisplay::ParametricPlotter2DDisplay()
     : rviz::Display(), min_value_(0.0), max_value_(0.0), m_buffer_indice(1), 
     m_max_x(1.0), m_is_active(false), ordinate_offset_(0), show_ordinate_(true), 
-    ordinate_precision_(1)
+    ordinate_precision_(0)
     {
     update_topic_property_ = new rviz::RosTopicProperty(
       "Topic", "",
@@ -82,11 +82,11 @@ namespace jsk_rviz_plugins
       "enable auto scale",
       this, SLOT(updateAutoScale()));
     max_value_property_ = new rviz::FloatProperty(
-      "max value", 1500,
+      "max value", 100,
       "max value, used only if auto scale is disabled",
       this, SLOT(updateMaxValue()));
     min_value_property_ = new rviz::FloatProperty(
-      "min value", -1.0,
+      "min value", 0.0,
       "min value, used only if auto scale is disabled",
       this, SLOT(updateMinValue()));
     fg_color_property_ = new rviz::ColorProperty(
@@ -280,8 +280,8 @@ namespace jsk_rviz_plugins
       uint16_t w = overlay_->getTextureWidth() - ordinate_offset_;
       uint16_t h = overlay_->getTextureHeight() - caption_offset_;
 
-      double margined_max_value = max_value_ + (max_value_ - min_value_) / 2;
-      double margined_min_value = min_value_ - (max_value_ - min_value_) / 2;
+      double margined_max_value = max_value_ + (max_value_ - min_value_) / 6;
+      double margined_min_value = min_value_ - (max_value_ - min_value_) / 6;
       
       for (size_t i = 1; i < m_buffer_indice; i++) {
         double v_prev = (margined_max_value - buffer_[i - 1].dsg) / (margined_max_value - margined_min_value);
@@ -517,7 +517,7 @@ namespace jsk_rviz_plugins
     m_log_pub = n.advertise<std_msgs::String>("plugin_log", 1000);
 
     m_depth_sub.subscribe(n, "depth_stamped", 1);
-    m_dsg_sub.subscribe(n, "dsg_value_stamped", 1);
+    m_dsg_sub.subscribe(n, "dsg_value_filtered_stamped", 1);
 
     m_sync.reset(new m_Sync_type(m_sync_policy(10), m_depth_sub, m_dsg_sub));
     m_sync->registerCallback(boost::bind(&ParametricPlotter2DDisplay::m_sync_cb, this, _1, _2));

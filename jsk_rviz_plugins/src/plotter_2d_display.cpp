@@ -43,7 +43,7 @@ namespace jsk_rviz_plugins
 {
   Plotter2DDisplay::Plotter2DDisplay()
     : rviz::Display(), min_value_(0.0), max_value_(0.0), 
-    ordinate_offset_(0), show_ordinate_(true), ordinate_precision_(1)
+    ordinate_offset_(0), show_ordinate_(true), ordinate_precision_(0)
   {
     update_topic_property_ = new rviz::RosTopicProperty(
       "Topic", "",
