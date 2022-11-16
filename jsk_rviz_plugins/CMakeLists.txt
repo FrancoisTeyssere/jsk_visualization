@@ -79,6 +79,7 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 set(HEADER_FILES
   src/ambient_sound_display_groovy.h
+  src/angles_display.h
   src/select_point_cloud_publish_action.h
   src/footstep_display.h
   src/publish_topic.h
@@ -135,6 +136,7 @@ endif()
 set(SOURCE_FILES
   src/ambient_sound_display_groovy.cpp
   src/ambient_sound_visual.cpp
+  src/angles_display.cpp
   src/footstep_display.cpp
   src/publish_topic.cpp
   src/cancel_action.cpp
