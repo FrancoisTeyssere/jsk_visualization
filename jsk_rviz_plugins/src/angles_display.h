@@ -35,6 +35,8 @@
 #ifndef JSK_RVIZ_PLUGINS_PIE_CHART_DISPLAY_H_
 #define JSK_RVIZ_PLUGINS_PIE_CHART_DISPLAY_H_
 #include "std_msgs/Float32.h"
+#include "std_msgs/Bool.h"
+
 #ifndef Q_MOC_RUN
 #include <rviz/display.h>
 #include "overlay_utils.h"
@@ -73,11 +75,13 @@ namespace jsk_rviz_plugins
     virtual void onInitialize();
     virtual void processSagittalMessage(const std_msgs::Float32::ConstPtr& msg);
     virtual void processAxialMessage(const std_msgs::Float32::ConstPtr& msg);
+    virtual void processTargetMessage(const std_msgs::Bool::ConstPtr& msg);
     virtual void drawPlot(double sagittal_val, double axial_val);
     virtual void update(float wall_dt, float ros_dt);
     // properties
     rviz::RosTopicProperty* update_sagittal_topic_property_;
     rviz::RosTopicProperty* update_axial_topic_property_;
+    rviz::RosTopicProperty* update_target_topic_property_;
     rviz::IntProperty* size_property_;
     rviz::IntProperty* left_property_;
     rviz::IntProperty* top_property_;
@@ -98,6 +102,8 @@ namespace jsk_rviz_plugins
 
     ros::Subscriber sagittal_sub_;
     ros::Subscriber axial_sub_;
+    ros::Subscriber target_sub_;
+
     int left_;
     int top_;
     uint16_t texture_size_;
@@ -115,6 +121,9 @@ namespace jsk_rviz_plugins
     double min_value_;
     float sagittal_data_;
     float axial_data_;
+    float sagittal_target_;
+    float axial_target_;
+    bool target_active_;
     bool update_required_;
     bool sagittal_first_time_;
     bool axial_first_time_;

@@ -49,7 +49,7 @@ namespace jsk_rviz_plugins
 
   AnglesDisplay::AnglesDisplay()
     : rviz::Display(), update_required_(false), sagittal_first_time_(true), axial_first_time_(true),
-     sagittal_data_(0.0), axial_data_(0.0)
+     sagittal_data_(0.0), axial_data_(0.0), sagittal_target_(0.0), axial_target_(0.0), target_active_(false)
   {
     update_sagittal_topic_property_ = new rviz::RosTopicProperty(
       "Sagittal Topic", "",
@@ -60,6 +60,11 @@ namespace jsk_rviz_plugins
       "Axial Topic", "",
       ros::message_traits::datatype<std_msgs::Float32>(),
       "std_msgs::Float32 topic to subscribe to.",
+      this, SLOT( updateTopic() ));
+    update_target_topic_property_ = new rviz::RosTopicProperty(
+      "Target Topic", "",
+      ros::message_traits::datatype<std_msgs::Bool>(),
+      "std_msgs::Boolk topic to subscribe to.",
       this, SLOT( updateTopic() ));
     size_property_ = new rviz::IntProperty("size", 400,
                                            "size of the plotter window",
@@ -180,7 +185,7 @@ namespace jsk_rviz_plugins
       overlay_->setDimensions(overlay_->getTextureWidth(),
                               overlay_->getTextureHeight());
       //drawPlot(sagittal_data_, axial_data_);
-      drawPlot(axial_data_, -sagittal_data_);
+      drawPlot(axial_data_, sagittal_data_);
     }
   }
   
@@ -213,6 +218,25 @@ namespace jsk_rviz_plugins
       if(fabs(axial_data_>90))
         axial_data_ = -axial_data_*fmod(msg->data, 90)/fabs(axial_data_);
       update_required_ = true;
+    }
+  }
+
+  void AnglesDisplay::processTargetMessage(const std_msgs::Bool::ConstPtr& msg)
+  {
+    boost::mutex::scoped_lock lock(mutex_);
+
+    if (!overlay_->isVisible()) {
+      return;
+    }
+    if(!target_active_ && msg->data)
+    {
+      target_active_ = true;
+      sagittal_target_ = sagittal_data_;
+      axial_target_ = axial_data_;
+    }
+    else if(target_active_ && !msg->data)
+    {
+      target_active_ = false;
     }
   }
 
@@ -275,17 +299,28 @@ namespace jsk_rviz_plugins
                           center_size);
 
       //draw position
-      painter.drawEllipse(outer_line_width/2+((width/2)-circle_size/2)+axial_val*width/180, 
-      outer_line_width/2+(((height-caption_offset_)/2)-circle_size/2)+sagittal_val*height/180,
+      painter.drawEllipse(outer_line_width/2+((width/2)-circle_size/2)+axial_val*width/360, 
+      outer_line_width/2+(((height-caption_offset_)/2)-circle_size/2)+sagittal_val*height/360,
                           circle_size,
                           circle_size);
 
       //draw line
       painter.drawLine(outer_line_width/2+(width/2),
         outer_line_width/2+(((height-caption_offset_)/2)),
-        outer_line_width/2+((width/2))+axial_val*width/180, 
-        outer_line_width/2+(((height-caption_offset_)/2))+sagittal_val*height/180
+        outer_line_width/2+((width/2))+axial_val*width/360, 
+        outer_line_width/2+(((height-caption_offset_)/2))+sagittal_val*height/360
       );
+
+      //draw target
+      if(target_active_)
+      {
+        painter.setBrush(QBrush(Qt::green));
+        painter.setPen(Qt::green);
+        painter.drawEllipse(outer_line_width/2+((width/2)-circle_size/2)+axial_target_*width/360, 
+        outer_line_width/2+(((height-caption_offset_)/2)-circle_size/2)+sagittal_target_*height/360,
+                            circle_size,
+                            circle_size);
+      }
 
       // caption
       if (show_caption_) {
@@ -305,6 +340,7 @@ namespace jsk_rviz_plugins
   {
     std::string sagittal_topic_name = update_sagittal_topic_property_->getTopicStd();
     std::string axial_topic_name = update_axial_topic_property_->getTopicStd();
+    std::string target_topic_name = update_target_topic_property_->getTopicStd();
     if (sagittal_topic_name.length() > 0 && sagittal_topic_name != "/") {
       ros::NodeHandle n;
       sagittal_sub_ = n.subscribe(sagittal_topic_name, 1, &AnglesDisplay::processSagittalMessage, this);
@@ -312,6 +348,10 @@ namespace jsk_rviz_plugins
     if (axial_topic_name.length() > 0 && axial_topic_name != "/") {
       ros::NodeHandle n;
       axial_sub_ = n.subscribe(axial_topic_name, 1, &AnglesDisplay::processAxialMessage, this);
+    }
+    if (target_topic_name.length() > 0 && target_topic_name != "/") {
+      ros::NodeHandle n;
+      target_sub_ = n.subscribe(target_topic_name, 1, &AnglesDisplay::processTargetMessage, this);
     }
   }
 
